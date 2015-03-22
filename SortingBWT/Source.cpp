@@ -8,12 +8,26 @@
 
 using namespace std;
 
+class LCPInterval
+{
+public:
+	int startInt;
+	int endInt;
+	int LCPIntVal;
+	LCPInterval()
+	{
+		startInt = 0;
+		endInt = 0;
+		LCPIntVal = 0;
+	}
+};
 class BWT
 {
 public:
 	vector<char> BWTString;
 	vector<int> LCPVal;
 	vector<int> componentIds;
+	vector<LCPInterval> LCPintervals;
 	string origString;
 	int compSize;
 	vector<string> LCPArray;
@@ -37,7 +51,7 @@ void BWT::findBWT()
 void BWT::findLCPArray()
 {
 	LCPArray.push_back("\0");
-	LCPVal.push_back(0);
+	LCPVal.push_back(-1);
 	for (int i = 1; i < componentIds.size(); i++)
 	{
 		string s1 = origString.substr(componentIds[i-1]);
@@ -133,11 +147,11 @@ int main()
 			i++;
 		}
 
-		cout << endl << i << endl;
+		//cout << endl << i << endl;
 		myFile.close();
 	}
 	
-	s = ss.str()+"$";
+	s = s1;//ss.str()+"$";
 	//s.erase(remove(s.begin(), s.end(), '\n'), s.end());
 	cout << s;
 	BWT bwt;
@@ -151,24 +165,70 @@ int main()
 	}
 	bwt.QuickSort(0,s1.size());
 
-	/*for (int i = 0; i < s.size(); i++)
+	for (int i = 0; i < s.size(); i++)
 	{
 		cout << endl << bwt.origString.substr(bwt.componentIds[i], bwt.compSize) << "   " << bwt.componentIds[i];
 	}
-*/
 	// find BWT from sorted component ids
 	bwt.findBWT();
-	/*cout << endl;
+	cout << endl;
 	for (int i = 0; i < bwt.BWTString.size(); i++)
 	{
 		cout << bwt.BWTString[i] << "  ";
-	}*/
+	}
 	// find LCPs from sorted component ids
 	bwt.findLCPArray();
-	/*for (int i = 0; i < bwt.LCPArray.size(); i++)
+	for (int i = 0; i < bwt.LCPArray.size(); i++)
 	{
 		cout << endl<< bwt.LCPArray[i] << "  "<<bwt.LCPVal[i];
-	}*/
+	}
+
+    //Start: compute LCP intervals for super maximal repeats.
+	for (int i = 0; i < s.size(); i++)
+	{
+		LCPInterval interval;
+		bool first = true;
+		for (int j = 0; j < s.size()-i; j++)
+		{
+			if (i + j == 0)
+			{
+				continue;
+			}
+			if (first)
+			{
+				if (bwt.LCPVal[i + j] != bwt.LCPVal[i + j + 1])
+				{
+					interval.startInt = i + j;
+					interval.LCPIntVal++;
+					interval.endInt = i + j + 1;
+					first = false;
+				}
+			}
+			else
+			{
+				if(i+j == s.size()-1)// if j = s.size() .. worst case
+				{
+					bwt.LCPintervals.push_back(interval);
+					break;
+				}
+				if (bwt.LCPVal[i + j] > 0)
+				{
+					interval.LCPIntVal = bwt.LCPVal[i+j];
+					interval.endInt = i + j;
+					if (bwt.LCPVal[i+j+1]!=bwt.LCPVal[i+j])
+					{
+						
+					}
+				}
+				else if (bwt.LCPVal[i + j]==0)
+				{
+					bwt.LCPintervals.push_back(interval);
+					break;
+				}
+			}
+		}
+	}
+	// End : Compute LCP intervals
 	fstream fout;
 	fout.open("out.txt", ios::out);
 	if (fout.is_open())
