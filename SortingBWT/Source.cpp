@@ -4,6 +4,7 @@
 #include<iostream>
 #include<string>
 #include<vector>
+#include<math.h>
 #include<conio.h>
 
 using namespace std;
@@ -18,7 +19,26 @@ public:
 	{
 		startInt = 0;
 		endInt = 0;
-		LCPIntVal = 0;
+		LCPIntVal = -1;
+	}
+	bool isNULLInterval()
+	{
+		return (startInt == 0 && endInt == 0 && LCPIntVal == -1);
+	}
+
+	void MergeInterval(LCPInterval intervalToMerge)
+	{
+		startInt = this->startInt;
+		endInt = intervalToMerge.endInt;
+		LCPIntVal = min(this->LCPIntVal, intervalToMerge.LCPIntVal);
+	}
+	int min(int a, int b)
+	{
+		if (a < b)
+		{
+			return a;
+		}
+		return b;
 	}
 };
 class BWT
@@ -106,12 +126,12 @@ int BWT::Partition(int start, int n)
 		{
 			jInc += compSize;
 			pivotPoint += compSize;
-			iPivot = origString.substr(pivotPoint, compSize);
+			jPivot = origString.substr(pivotPoint, compSize);
 			jComp = origString.substr(jInc, compSize);
 		}
-		if (iComp < pivot)
+		if (iComp < iPivot)
 			i++;
-		else if (jComp > pivot)
+		else if (jComp > jPivot)
 			j--;
 		else{
 			swap(componentIds[i], componentIds[j]);
@@ -132,7 +152,7 @@ void BWT::swap(int &s1,int &s2)
 
 int main()
 {
-	string s1 = "ATATATTAG$";
+	string s1 = "mississippi$";
 	string s ="";//"ATATATTAG$";
 	fstream myFile;
 	stringstream ss;
@@ -184,43 +204,45 @@ int main()
 	}
 
     //Start: compute LCP intervals for super maximal repeats.
-	for (int i = 0; i < s.size(); i++)
+	int bwtLCPArraySize = bwt.LCPArray.size();
+	for (int i = 1; i < bwtLCPArraySize; i++)
 	{
 		LCPInterval interval;
+		int LCPval = -1;
 		bool first = true;
-		for (int j = 0; j < s.size()-i; j++)
+		for (int j = 0; j < 5; j++)
 		{
-			if (i + j == 0)
-			{
-				continue;
-			}
+			/**/
 			if (first)
 			{
-				if (bwt.LCPVal[i + j] != bwt.LCPVal[i + j + 1])
+				if (i + j + 1>bwtLCPArraySize - 1)
+				{
+					break;
+				}
+				if (bwt.LCPVal[i + j] != bwt.LCPVal[i + j + 1] && bwt.LCPVal[i + j + 1] > 0)
 				{
 					interval.startInt = i + j;
-					interval.LCPIntVal++;
+					interval.LCPIntVal = bwt.LCPVal[i + j + 1];
+					LCPval = bwt.LCPVal[i + j + 1];;
 					interval.endInt = i + j + 1;
 					first = false;
 				}
+				else
+					break;
 			}
 			else
 			{
-				if(i+j == s.size()-1)// if j = s.size() .. worst case
+				if (i + j + 1 >= bwtLCPArraySize - 1)// if j = s.size() .. worst case
 				{
 					bwt.LCPintervals.push_back(interval);
 					break;
 				}
-				if (bwt.LCPVal[i + j] > 0)
+				if (bwt.LCPVal[i + j + 1] == LCPval)
 				{
-					interval.LCPIntVal = bwt.LCPVal[i+j];
-					interval.endInt = i + j;
-					if (bwt.LCPVal[i+j+1]!=bwt.LCPVal[i+j])
-					{
-						
-					}
+					interval.LCPIntVal = LCPval;
+					interval.endInt = i + j+1;
 				}
-				else if (bwt.LCPVal[i + j]==0)
+				else 
 				{
 					bwt.LCPintervals.push_back(interval);
 					break;
@@ -229,6 +251,50 @@ int main()
 		}
 	}
 	// End : Compute LCP intervals
+
+	// Merge intervals
+	int lcpIntervalsSize = bwt.LCPintervals.size();
+	vector<LCPInterval> tempVector;
+	LCPInterval previousInterval;
+	for (int i = 0; i < lcpIntervalsSize-1; i++)
+	{
+		int j = i;
+		LCPInterval interval;
+		
+		bool first = true;
+		while (j!=lcpIntervalsSize-1 && bwt.LCPintervals[j].endInt == bwt.LCPintervals[j+1].startInt)
+		{
+			if (first)
+				interval = bwt.LCPintervals[j];
+			
+			LCPInterval tempInterval = interval;
+			interval.MergeInterval(bwt.LCPintervals[j+1]);
+
+			if (tempInterval.LCPIntVal>interval.LCPIntVal)
+				tempVector.push_back(tempInterval);
+
+			j++;
+			first = false;
+		}
+
+		if (j > i) 
+		{
+			if (tempVector.size()==0)
+				tempVector.push_back(interval);
+			else if(previousInterval.LCPIntVal != interval.LCPIntVal)
+				tempVector.push_back(interval);
+
+			previousInterval = interval;
+		}
+	}
+
+	//removing duplicates
+	/*for (int i = 0; i < tempVector.size(); i++)
+	{
+		if (te)
+	}*/
+	//end: removing duplicates
+	// End : Merge intervals
 	fstream fout;
 	fout.open("out.txt", ios::out);
 	if (fout.is_open())
