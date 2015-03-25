@@ -9,45 +9,14 @@
 
 using namespace std;
 
-class LCPInterval
-{
-public:
-	int startInt;
-	int endInt;
-	int LCPIntVal;
-	LCPInterval()
-	{
-		startInt = 0;
-		endInt = 0;
-		LCPIntVal = -1;
-	}
-	bool isNULLInterval()
-	{
-		return (startInt == 0 && endInt == 0 && LCPIntVal == -1);
-	}
 
-	void MergeInterval(LCPInterval intervalToMerge)
-	{
-		startInt = this->startInt;
-		endInt = intervalToMerge.endInt;
-		LCPIntVal = min(this->LCPIntVal, intervalToMerge.LCPIntVal);
-	}
-	int min(int a, int b)
-	{
-		if (a < b)
-		{
-			return a;
-		}
-		return b;
-	}
-};
 class BWT
 {
 public:
 	vector<char> BWTString;
 	vector<int> LCPVal;
 	vector<int> componentIds;
-	vector<LCPInterval> LCPintervals;
+	
 	string origString;
 	int compSize;
 	vector<string> LCPArray;
@@ -203,108 +172,59 @@ int main()
 		cout << endl<< bwt.LCPArray[i] << "  "<<bwt.LCPVal[i];
 	}
 
-    //Start: compute LCP intervals for super maximal repeats.
-	int bwtLCPArraySize = bwt.LCPArray.size();
-	for (int i = 1; i < bwtLCPArraySize; i++)
-	{
-		LCPInterval interval;
-		int LCPval = -1;
-		bool first = true;
-		for (int j = 0; j < 5; j++)
-		{
-			/**/
-			if (first)
-			{
-				if (i + j + 1>bwtLCPArraySize - 1)
-				{
-					break;
-				}
-				if (bwt.LCPVal[i + j] != bwt.LCPVal[i + j + 1] && bwt.LCPVal[i + j + 1] > 0)
-				{
-					interval.startInt = i + j;
-					interval.LCPIntVal = bwt.LCPVal[i + j + 1];
-					LCPval = bwt.LCPVal[i + j + 1];;
-					interval.endInt = i + j + 1;
-					first = false;
-				}
-				else
-					break;
-			}
-			else
-			{
-				if (i + j + 1 >= bwtLCPArraySize - 1)// if j = s.size() .. worst case
-				{
-					bwt.LCPintervals.push_back(interval);
-					break;
-				}
-				if (bwt.LCPVal[i + j + 1] == LCPval)
-				{
-					interval.LCPIntVal = LCPval;
-					interval.endInt = i + j+1;
-				}
-				else 
-				{
-					bwt.LCPintervals.push_back(interval);
-					break;
-				}
-			}
-		}
-	}
-	// End : Compute LCP intervals
-
-	// Merge intervals
-	int lcpIntervalsSize = bwt.LCPintervals.size();
-	vector<LCPInterval> tempVector;
-	LCPInterval previousInterval;
-	for (int i = 0; i < lcpIntervalsSize-1; i++)
-	{
-		int j = i;
-		LCPInterval interval;
-		
-		bool first = true;
-		while (j!=lcpIntervalsSize-1 && bwt.LCPintervals[j].endInt == bwt.LCPintervals[j+1].startInt)
-		{
-			if (first)
-				interval = bwt.LCPintervals[j];
-			
-			LCPInterval tempInterval = interval;
-			interval.MergeInterval(bwt.LCPintervals[j+1]);
-
-			if (tempInterval.LCPIntVal>interval.LCPIntVal)
-				tempVector.push_back(tempInterval);
-
-			j++;
-			first = false;
-		}
-
-		if (j > i) 
-		{
-			if (tempVector.size()==0)
-				tempVector.push_back(interval);
-			else if(previousInterval.LCPIntVal != interval.LCPIntVal)
-				tempVector.push_back(interval);
-
-			previousInterval = interval;
-		}
-	}
-
-	//removing duplicates
-	/*for (int i = 0; i < tempVector.size(); i++)
-	{
-		if (te)
-	}*/
-	//end: removing duplicates
-	// End : Merge intervals
+	// Start : compute Super maximal repeats 
 	fstream fout;
 	fout.open("out.txt", ios::out);
-	if (fout.is_open())
+	bool currentUp = false, currDown = false;
+	int startInt = -1, endInt=-1;
+	for (int i = 0; i < bwt.LCPVal.size(); i++)
 	{
-		for (int i = 0; i < bwt.componentIds.size(); i++)
+		//if (!currentUp && bwt.LCPVal[i+1] < 50)
+			//break;
+		if (bwt.LCPVal[i]<bwt.LCPVal[i+1])
 		{
-			fout << " "<<bwt.componentIds[i];
+			currentUp = true;
+			startInt = i;
+			endInt = i + 1;
 		}
-		fout.close();
+		if (currentUp)
+		{
+			if (bwt.LCPVal[i] == bwt.LCPVal[i + 1])
+			{
+				endInt = i + 1;
+			}
+			else if (bwt.LCPVal[i] > bwt.LCPVal[i + 1])
+			{
+				currentUp = false;
+				currDown = true;
+			}
+		}
+		if (!currentUp && currDown)
+		{
+			//put stint and endint in file.
+			if (endInt - startInt + 1 <= 4) // possiblity for supermaximal repeat
+			{
+				// check for pairwise distinct
+				bool pairWiseDistinct = true;
+				for (int j = startInt; j < endInt; j++)
+				{
+					for (int k = j + 1; k <= endInt; k++)
+					{
+						if (bwt.BWTString[j] == bwt.BWTString[k])
+						{
+							pairWiseDistinct = false;
+						}
+					}
+				}
+				if (fout.is_open() && pairWiseDistinct)
+				{
+					fout << bwt.componentIds[startInt]<<"\t"<<bwt.LCPVal[endInt]<<endl;
+				}
+			}
+		}
 	}
+	fout.close();
+	// End : compute Super maximal repeats 
 	cout << "over";
 	_getch();
 	return 0;
