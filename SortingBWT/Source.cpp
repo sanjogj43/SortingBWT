@@ -169,7 +169,12 @@ int main()
 	bwt.findLCPArray();
 	for (int i = 0; i < bwt.LCPArray.size(); i++)
 	{
-		cout << endl<< bwt.LCPArray[i] << "  "<<bwt.LCPVal[i];
+		cout << endl<<i<<"\t"<< bwt.LCPArray[i] << "\t"<<bwt.LCPVal[i];
+	}
+	cout << endl << endl;
+	for (int i = 0; i < bwt.componentIds.size(); i++)
+	{
+		cout << bwt.componentIds[i]<<"\t"<<s.substr(bwt.componentIds[i]) << endl;
 	}
 
 	// Start : compute Super maximal repeats 
@@ -177,11 +182,11 @@ int main()
 	fout.open("out.txt", ios::out);
 	bool currentUp = false, currDown = false;
 	int startInt = -1, endInt=-1;
-	for (int i = 0; i < bwt.LCPVal.size(); i++)
+ 	for (int i = 0; i < bwt.LCPVal.size()-1; i++)
 	{
-		//if (!currentUp && bwt.LCPVal[i+1] < 50)
+		//if (!currentUp && bwt.LCPVal[i+1] < 3)
 			//break;
-		if (bwt.LCPVal[i]<bwt.LCPVal[i+1])
+		if (i+1!=bwt.LCPVal.size() && bwt.LCPVal[i]<bwt.LCPVal[i+1])
 		{
 			currentUp = true;
 			startInt = i;
@@ -202,7 +207,7 @@ int main()
 		if (!currentUp && currDown)
 		{
 			//put stint and endint in file.
-			if (endInt - startInt + 1 <= 4) // possiblity for supermaximal repeat
+			if (endInt - startInt + 1 <= 4 && bwt.LCPVal[endInt]>2) // possiblity for supermaximal repeat
 			{
 				// check for pairwise distinct
 				bool pairWiseDistinct = true;
@@ -213,12 +218,16 @@ int main()
 						if (bwt.BWTString[j] == bwt.BWTString[k])
 						{
 							pairWiseDistinct = false;
+							break;
 						}
 					}
 				}
 				if (fout.is_open() && pairWiseDistinct)
 				{
 					fout << bwt.componentIds[startInt]<<"\t"<<bwt.LCPVal[endInt]<<endl;
+					pairWiseDistinct = false;
+					currentUp = false;
+					currDown = false;
 				}
 			}
 		}
