@@ -121,7 +121,7 @@ void BWT::swap(int &s1,int &s2)
 
 int main()
 {
-	string s1 = "mississippi$";
+	string s1 = "ATATATTAG$";//"mississippi$";
 	string s ="";//"ATATATTAG$";
 	fstream myFile;
 	stringstream ss;
@@ -140,49 +140,52 @@ int main()
 		myFile.close();
 	}
 	
-	s = s1;//ss.str()+"$";
+	s = ss.str()+"$";
 	//s.erase(remove(s.begin(), s.end(), '\n'), s.end());
 	cout << s;
 	BWT bwt;
-	bwt.origString = s1;
+	bwt.origString = s;
 	int compSize = 0;
 	cout << "Enter the component size:";
 	cin >> bwt.compSize; 
-	for (int i = 0; i < s1.size(); i++)
+	for (int i = 0; i < s.size(); i++)
 	{
 		bwt.componentIds.push_back(i);
 	}
-	bwt.QuickSort(0,s1.size());
+	bwt.QuickSort(0,s.size());
 
+	cout << endl << "Sorted Component ids with components" << endl;
 	for (int i = 0; i < s.size(); i++)
 	{
 		cout << endl << bwt.origString.substr(bwt.componentIds[i], bwt.compSize) << "   " << bwt.componentIds[i];
 	}
 	// find BWT from sorted component ids
 	bwt.findBWT();
-	cout << endl;
+	cout << endl<<"BWT"<<endl;
 	for (int i = 0; i < bwt.BWTString.size(); i++)
 	{
-		cout << bwt.BWTString[i] << "  ";
+		cout <<i<<"\t"<<bwt.componentIds[i]<<"\t"<<bwt.BWTString[i];
 	}
 	// find LCPs from sorted component ids
 	bwt.findLCPArray();
+	cout <<endl<< "LCP Array"<<endl;
 	for (int i = 0; i < bwt.LCPArray.size(); i++)
 	{
-		cout << endl<<i<<"\t"<< bwt.LCPArray[i] << "\t"<<bwt.LCPVal[i];
+		cout << endl<<i<<"\t"<<bwt.componentIds[i]<<"\t"<< bwt.LCPArray[i] << "\t"<<bwt.LCPVal[i];
 	}
-	cout << endl << endl;
+	/*cout << endl <<"Sorted Suffixes:"<< endl;
 	for (int i = 0; i < bwt.componentIds.size(); i++)
 	{
 		cout << bwt.componentIds[i]<<"\t"<<s.substr(bwt.componentIds[i]) << endl;
-	}
+	}*/
 
 	// Start : compute Super maximal repeats 
 	fstream fout;
 	fout.open("out.txt", ios::out);
 	bool currentUp = false, currDown = false;
 	int startInt = -1, endInt=-1;
- 	for (int i = 0; i < bwt.LCPVal.size()-1; i++)
+	cout << endl << "Supermaximal repeats:" << endl;
+	for (int i = 0; i < bwt.LCPVal.size()-1; i++)
 	{
 		//if (!currentUp && bwt.LCPVal[i+1] < 3)
 			//break;
@@ -207,7 +210,7 @@ int main()
 		if (!currentUp && currDown)
 		{
 			//put stint and endint in file.
-			if (endInt - startInt + 1 <= 4 && bwt.LCPVal[endInt]>2) // possiblity for supermaximal repeat
+			if (endInt - startInt + 1 <= 4 && bwt.LCPVal[endInt]>10) // possiblity for supermaximal repeat
 			{
 				// check for pairwise distinct
 				bool pairWiseDistinct = true;
@@ -222,9 +225,11 @@ int main()
 						}
 					}
 				}
+				
 				if (fout.is_open() && pairWiseDistinct)
 				{
-					fout << bwt.componentIds[startInt]<<"\t"<<bwt.LCPVal[endInt]<<endl;
+					fout << bwt.componentIds[startInt] << "\t" << bwt.LCPVal[endInt] << "\t" << s.substr(bwt.componentIds[startInt], bwt.LCPVal[endInt]) << endl;
+					cout << bwt.componentIds[startInt] << "\t" << bwt.LCPVal[endInt] << "\t" << s.substr(bwt.componentIds[startInt], bwt.LCPVal[endInt]) << endl;
 					pairWiseDistinct = false;
 					currentUp = false;
 					currDown = false;
