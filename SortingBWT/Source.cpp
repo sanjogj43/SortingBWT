@@ -183,7 +183,7 @@ void BWT::findSuperMaximalRepeats()
 				if (fout.is_open() && pairWiseDistinct)
 				{
 					fout << componentIds[startInt] << "\t" << LCPVal[endInt] << "\t" << origString.substr(componentIds[startInt], LCPVal[endInt]) << endl;
-					//cout << componentIds[startInt] << "\t" << LCPVal[endInt] << "\t" << origString.substr(componentIds[startInt], LCPVal[endInt]) << endl;
+					cout << componentIds[startInt] << "\t" << LCPVal[endInt] << "\t" << origString.substr(componentIds[startInt], LCPVal[endInt]) << endl;
 					pairWiseDistinct = false;
 					currentUp = false;
 					currDown = false;
@@ -200,7 +200,6 @@ int main()
 	string s = "";//"ATATATTAG$";
 	fstream myFile;
 	stringstream ss;
-	ss << s1;
 	myFile.open("genome.txt");
 	if (myFile.is_open())
 	{
